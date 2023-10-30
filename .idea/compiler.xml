@@ -11,11 +11,6 @@
         <module name="MyMVC-starter" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="my-spring-mvc" target="1.8" />
-      <module name="MyMVC-starter" target="1.8" />
-      <module name="MySpringMVC" target="1.8" />
-    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">

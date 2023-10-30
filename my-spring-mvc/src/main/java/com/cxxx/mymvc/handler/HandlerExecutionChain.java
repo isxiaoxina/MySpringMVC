@@ -2,7 +2,6 @@ package com.cxxx.mymvc.handler;
 
 import com.cxxx.mymvc.ModelAndView;
 import com.cxxx.mymvc.handler.interceptor.HandlerInterceptor;
-import com.cxxx.mymvc.handler.interceptor.MappedInterceptor;
 import org.springframework.util.CollectionUtils;
 
 import javax.servlet.http.HttpServletRequest;

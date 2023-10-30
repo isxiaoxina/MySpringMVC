@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * 2然后取出bean里面的controller注解的类然后循环类
  * 3然后循环类controller取出里面所有的方法继续循环方法
  * 4然后根据方法获得注解返回元数据信息（路径这些）
- * 5最后把这些信息 this.mappingRegistry.register(requestMappingInfo, handler, method)
+ * 5最后把这些信息 this..mappingRegistryregister(requestMappingInfo, handler, method)
  * 一对一的存进注册中心
  */
 public class RequestMappingHandlerMapping extends ApplicationObjectSupport implements HandlerMapping {
@@ -55,6 +55,12 @@ public class RequestMappingHandlerMapping extends ApplicationObjectSupport imple
         initialHandlerMethods();
     }
 
+    /**
+     * 初始化
+     * 1 initialHandlerMethods工厂先找到所有control  然后循环
+     * 2detectHandlerMethods从方法里面分离出来注解上面的路径 然后分别注册进info和method的实体类list里面
+     *  info里面就是方法完整的路径和方式（get 或者post）
+     */
     private void initialHandlerMethods() {
         //返回object下所有的注册进ioc 的bean  类。
         Map<String, Object> beansOfMap = BeanFactoryUtils.beansOfTypeIncludingAncestors(obtainApplicationContext(), Object.class);
@@ -68,13 +74,14 @@ public class RequestMappingHandlerMapping extends ApplicationObjectSupport imple
     /**
      * 解析出handler类中 所有被RequestMapping注解的方法
      * 循环添加方法到 映射注册中心
-     *
+     *    相当于 把method拆分了一部分分别注册进不同的list
      * @param beanName
      * @param handler
      */
     private void detectHandlerMethods(String beanName, Object handler) {
         Class<?> handlerClass = handler.getClass();
         //通过ioc里面的类  遍历取出所有方法和我们自定义的元数据类存进map
+        //从方法里面分离出来注解上面的路径
         Map<Method, RequestMappingInfo> methodsOfMap = MethodIntrospector.selectMethods(handlerClass,
                 (MethodIntrospector.MetadataLookup<RequestMappingInfo>) method -> getRequestMappingInfo(method, handlerClass));//需要的元数据方法
         //循环把每个类里面的每个方法和请求映射信息注册到注册中心的容器里面
@@ -122,24 +129,27 @@ public class RequestMappingHandlerMapping extends ApplicationObjectSupport imple
      */
     private boolean isHandler(Object handler) {
         Class<?> aClass = handler.getClass();
-        return (AnnotatedElementUtils.hasAnnotation(aClass, Controller.class));
+        return AnnotatedElementUtils.hasAnnotation(aClass, Controller.class);
     }
 
     /**
      * 处理程序执行链
+     *
      * @param request   传进来请求
      * @return
      * @throws Exception
+     * 把请求路径获取到 然后从初始化的时候注册了所有方法的注册中心里面把对应路径的方法取出来
+     * 如果又就取 没有就报错  。
      */
     @Override
     public HandlerExecutionChain getHandler(HttpServletRequest request) throws Exception {
         String lookupPath = request.getRequestURI();
         //处理器方法
         HandlerMethod handler = mappingRegistry.getMethodByPath(lookupPath);
-        if (Objects.isNull(handler)) {
+        if (Objects.isNull(handler)) { //没找到这个方法
             throw new NoHandlerFoundException(request);
         }
-        return createHandlerExecutionChain(lookupPath, handler);
+        return createHandlerExecutionChain(lookupPath, handler);   /********/
     }
 
     /**
@@ -151,7 +161,7 @@ public class RequestMappingHandlerMapping extends ApplicationObjectSupport imple
      * @return
      */
     private HandlerExecutionChain createHandlerExecutionChain(String lookupPath, HandlerMethod handler) {
-        List<HandlerInterceptor> interceptors = this.interceptors.stream().//拦截器匹配支持的
+        List<HandlerInterceptor> interceptors = this.interceptors.stream().//拦截器匹配  拦截的请求
                 filter(mappedInterceptor -> mappedInterceptor.matches(lookupPath))
                 .collect(Collectors.toList());
         return new HandlerExecutionChain(handler, interceptors);
